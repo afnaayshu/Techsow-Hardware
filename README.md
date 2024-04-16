@@ -1,4 +1,4 @@
-#TechSow - Integrated Crop and Soil Monitoring System
+# TechSow - Integrated Crop and Soil Monitoring System
 
 ## NPK Sensor with Arduino and ESP32
 
