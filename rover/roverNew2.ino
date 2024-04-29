@@ -22,7 +22,7 @@ int Right_speed = 50;  // A variable to store the right motor speed value
 int Left_speed = 50;   // A variable to store the left motor speed value
 
 AsyncUDP udp;  // Create an instance of AsyncUDP
-
+String tempCode = "";
 void setup() {
   Serial.begin(115200);  // Start the serial communication at 115200 baud rate
   pinMode(in1, OUTPUT);  // Set the in1 pin as an output
@@ -60,23 +60,26 @@ void loop() {
       Serial.print("Right Speed: ");
       Serial.println(Right_speed);  // Print the parsed command
       String code = dataParser.getField(0);
-      if (code == 'f') {
-        forward(Left_speed, Right_speed);
-        Serial.println("fwd");
-      } else if (code == 'b') {
-        backward(Left_speed, Right_speed);
-        Serial.println("bck");
-      } else if (code == 'l') {
-        left(Left_speed, Right_speed);
-        Serial.println("left");
-      } else if (code == 'r') {
-        right(Left_speed, Right_speed);
-        Serial.println("right");
-      } else if (code == 's') {
-        Stop();
-        Serial.println("stop");
+      if (code != tempCode) {
+        if (code == "f") {
+          forward(Left_speed, Right_speed);
+          Serial.println("fwd");
+        } else if (code == "b") {
+          backward(Left_speed, Right_speed);
+          Serial.println("bck");
+        } else if (code == "l") {
+          left(Left_speed, Right_speed);
+          Serial.println("left");
+        } else if (code == "r") {
+          right(Left_speed, Right_speed);
+          Serial.println("right");
+        } else if (code == "s") {
+          Stop();
+          Serial.println("stop");
+        }
+        tempCode = code;
       }
-      code = '0';
+      code = "0";
     });
   }
 }
