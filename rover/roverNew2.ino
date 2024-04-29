@@ -60,19 +60,19 @@ void loop() {
       Serial.print("Right Speed: ");
       Serial.println(Right_speed);  // Print the parsed command
       String code = dataParser.getField(0);
-      if (dataParser.getField(0) == code) {
+      if (code == 'f') {
         forward(Left_speed, Right_speed);
         Serial.println("fwd");
-      } else if (dataParser.getField(0) == code) {
+      } else if (code == 'b') {
         backward(Left_speed, Right_speed);
         Serial.println("bck");
-      } else if (dataParser.getField(0) == code) {
+      } else if (code == 'l') {
         left(Left_speed, Right_speed);
         Serial.println("left");
-      } else if (dataParser.getField(0) == code) {
+      } else if (code == 'r') {
         right(Left_speed, Right_speed);
         Serial.println("right");
-      } else if (dataParser.getField(0) == code) {
+      } else if (code == 's') {
         Stop();
         Serial.println("stop");
       }
