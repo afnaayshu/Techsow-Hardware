@@ -53,8 +53,7 @@ void loop() {
       String IncomingData = (char*)packet.data(); // Convert the packet data to a string and store it in a variable
       Serial.print("Received Data: ");
       Serial.println(IncomingData); // Print the received data
-      dataParser.parseData(IncomingData, ','); // Parse the CSV data into separate command arrays
-      
+      dataParser.parseData(IncomingData, ','); // Parse the CSV data into separate command arrays     
       //Speed = dataParser.getField(1).toInt(); // Convert the second field of the data to an integer and store it in the Speed variable
       Left_speed = Speed; // Set the Left_speed variable to the same value as the Speed variable
       Right_speed = Speed; // Set the Right_speed variable to the same value as the Speed variable
@@ -62,9 +61,7 @@ void loop() {
       Serial.println(Left_speed);
       Serial.print("Right Speed: ");
       Serial.println(Right_speed); // Print the parsed command
-    });
-  }
-  if(dataParser.getField(0) == "f") {
+        if(dataParser.getField(0) == "f") {
     forward(Left_speed, Right_speed);
     Serial.println("fwd");
   }
@@ -83,6 +80,8 @@ void loop() {
   else if(dataParser.getField(0) == "s") {
     Stop();
     Serial.println("stop");
+  }
+    });
   }
 }
 
