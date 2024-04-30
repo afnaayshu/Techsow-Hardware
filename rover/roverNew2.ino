@@ -79,7 +79,6 @@ void loop() {
         }
         tempCode = code;
       }
-      code = "0";
     });
   }
 }
