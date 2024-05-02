@@ -10,8 +10,8 @@
 #define WIFI_PASSWORD "12345678"
 #define API_KEY "AIzaSyBqQqhv_TUGM79CvQyHQmp-vvekm61l1MY"
 #define DATABASE_URL "https://techsow-5d67d.asia-southeast1.firebasedatabase.app/"
-#define RX2 6
-#define TX2 7
+#define RX2 16
+#define TX2 17
 
 const int udpPort = 59430;
 
@@ -27,7 +27,8 @@ int Right_speed = 50;
 int Left_speed = 50;
 
 AsyncUDP udp;
-String tempCode = "";
+String tempCode = "z";
+String code = "z";
 FirebaseData fdbo;
 FirebaseAuth auth;
 FirebaseConfig config;
@@ -75,7 +76,7 @@ void setup() {
   if (Firebase.signUp(&config, &auth, "", "")) {
     Serial.println("SignUp OK");
     signupOK = true;
-    sendStartCommand();
+    // sendStartCommand();
   } else {
     Serial.printf("%s\n", config.signer.signupError.message.c_str());
   }
@@ -83,19 +84,36 @@ void setup() {
   Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
 }
-
 void loop() {
-  if (Serial2.available()) {
-      String data = Serial2.readStringUntil('\n');
-      parseData(data);
+  if (Serial2.available() > 0) {
+    String data = Serial2.readStringUntil('\n');
+    parseData(data);
+  }
   if (readSensor) {
     if (millis() - readSensorStartTime >= readSensorDuration) {
+      Serial.print(n);
+      Serial.print(p);
+      Serial.println(k);
+      if (Firebase.ready() && signupOK) {
+        sendDataPrevMillis = millis();
+        Firebase.RTDB.setInt(&fdbo, "/NPK/nitrogen", n);
+        Firebase.RTDB.setInt(&fdbo, "/NPK/phosphorus", p);
+        Firebase.RTDB.setInt(&fdbo, "/NPK/potassium", k);
+        Serial.println("Data sent to Firebase.");
+      }
       readSensor = false;
     }
-  }}
+  }
+  // if (Firebase.ready() && signupOK && (millis() - sendDataPrevMillis > 5000 || sendDataPrevMillis == 0)) {
+  //   sendDataPrevMillis = millis();
+  //   Firebase.RTDB.setInt(&fdbo, "/NPK/nitrogen", n);
+  //   Firebase.RTDB.setInt(&fdbo, "/NPK/phosphorus", p);
+  //   Firebase.RTDB.setInt(&fdbo, "/NPK/potassium", k);
+  //   Serial.println("Data sent to Firebase.");
+  // }
   if (udp.listen(udpPort)) {
-    Serial.print("UDP Listening on IP: ");
-    Serial.println(WiFi.localIP());
+    //Serial.print("UDP Listening on IP: ");
+    //Serial.println(WiFi.localIP());
     udp.onPacket([](AsyncUDPPacket packet) {
       String IncomingData = (char*)packet.data();
       Serial.print("Received Data: ");
@@ -103,42 +121,38 @@ void loop() {
       dataParser.parseData(IncomingData, ',');
       Left_speed = Speed;
       Right_speed = Speed;
-      Serial.print("Left Speed: ");
-      Serial.println(Left_speed);
-      Serial.print("Right Speed: ");
-      Serial.println(Right_speed);
-      String code = dataParser.getField(0);
-      if (code != tempCode) {
-        if (code == "f") {
-          forward(Left_speed, Right_speed);
-          Serial.println("fwd");
-        } else if (code == "b") {
-          backward(Left_speed, Right_speed);
-          Serial.println("bck");
-        } else if (code == "l") {
-          left(Left_speed, Right_speed);
-          Serial.println("left");
-        } else if (code == "r") {
-          right(Left_speed, Right_speed);
-          Serial.println("right");
-        } else if (code == "s") {
-          Stop();
-          Serial.println("stop");
-        } else if (code == "r") {
-          readSensor = true;
-          readSensorStartTime = millis();
-        }
-        tempCode = code;
-      }
+      //Serial.print("Left Speed: ");
+      //Serial.println(Left_speed);
+      //Serial.print("Right Speed: ");
+      //Serial.println(Right_speed);
+      code = dataParser.getField(0);
     });
-  }
-
-  if (Firebase.ready() && signupOK && (millis() - sendDataPrevMillis > 5000 || sendDataPrevMillis == 0)) {
-    sendDataPrevMillis = millis();
-    Firebase.RTDB.setInt(&fdbo, "/NPK/nitrogen", n);
-    Firebase.RTDB.setInt(&fdbo, "/NPK/phosphorus", p);
-    Firebase.RTDB.setInt(&fdbo, "/NPK/potassium", k);
-    Serial.println("Data sent to Firebase.");
+    if (code != tempCode) {
+      if (code == "f") {
+        forward(Left_speed, Right_speed);
+        Serial.println("fwd");
+      } else if (code == "b") {
+        backward(Left_speed, Right_speed);
+        Serial.println("bck");
+      } else if (code == "l") {
+        left(Left_speed, Right_speed);
+        Serial.println("left");
+      } else if (code == "r") {
+        right(Left_speed, Right_speed);
+        Serial.println("right");
+      } else if (code == "s") {
+        Stop();
+        Serial.println("stop");
+      } else if (code == "a") {
+        Stop();
+        readSensor = true;
+        readSensorStartTime = millis();
+        sendStartCommand();
+      }
+      tempCode = code;
+    } else {
+      Stop();
+    }
   }
 }
 
