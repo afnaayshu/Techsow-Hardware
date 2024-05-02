@@ -85,16 +85,14 @@ void setup() {
 }
 
 void loop() {
+  if (Serial2.available()) {
+      String data = Serial2.readStringUntil('\n');
+      parseData(data);
   if (readSensor) {
     if (millis() - readSensorStartTime >= readSensorDuration) {
       readSensor = false;
     }
-    if (Serial2.available()) {
-      String data = Serial2.readStringUntil('\n');
-      parseData(data);
-    }
-  }
-
+  }}
   if (udp.listen(udpPort)) {
     Serial.print("UDP Listening on IP: ");
     Serial.println(WiFi.localIP());
