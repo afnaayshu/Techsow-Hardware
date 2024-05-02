@@ -38,6 +38,8 @@ int n = 0;
 int p = 0;
 int k = 0;
 
+unsigned long RoverStartTime = 0; 
+
 bool readSensor = false;
 unsigned long readSensorStartTime = 0;
 const unsigned long readSensorDuration = 15000;  // 15 seconds
@@ -84,9 +86,10 @@ void setup() {
   Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
 }
+
 void loop() {
   if (Serial2.available() > 0) {
-    String data = Serial2.readStringUntil('\n');
+    String data = Serial2.readString();
     parseData(data);
   }
   if (readSensor) {
@@ -94,26 +97,10 @@ void loop() {
       Serial.print(n);
       Serial.print(p);
       Serial.println(k);
-      if (Firebase.ready() && signupOK) {
-        sendDataPrevMillis = millis();
-        Firebase.RTDB.setInt(&fdbo, "/NPK/nitrogen", n);
-        Firebase.RTDB.setInt(&fdbo, "/NPK/phosphorus", p);
-        Firebase.RTDB.setInt(&fdbo, "/NPK/potassium", k);
-        Serial.println("Data sent to Firebase.");
-      }
       readSensor = false;
     }
   }
-  // if (Firebase.ready() && signupOK && (millis() - sendDataPrevMillis > 5000 || sendDataPrevMillis == 0)) {
-  //   sendDataPrevMillis = millis();
-  //   Firebase.RTDB.setInt(&fdbo, "/NPK/nitrogen", n);
-  //   Firebase.RTDB.setInt(&fdbo, "/NPK/phosphorus", p);
-  //   Firebase.RTDB.setInt(&fdbo, "/NPK/potassium", k);
-  //   Serial.println("Data sent to Firebase.");
-  // }
   if (udp.listen(udpPort)) {
-    //Serial.print("UDP Listening on IP: ");
-    //Serial.println(WiFi.localIP());
     udp.onPacket([](AsyncUDPPacket packet) {
       String IncomingData = (char*)packet.data();
       Serial.print("Received Data: ");
@@ -121,10 +108,6 @@ void loop() {
       dataParser.parseData(IncomingData, ',');
       Left_speed = Speed;
       Right_speed = Speed;
-      //Serial.print("Left Speed: ");
-      //Serial.println(Left_speed);
-      //Serial.print("Right Speed: ");
-      //Serial.println(Right_speed);
       code = dataParser.getField(0);
     });
     if (code != tempCode) {
@@ -143,31 +126,46 @@ void loop() {
       } else if (code == "s") {
         Stop();
         Serial.println("stop");
-      } else if (code == "a") {
+      } if (code == "a") {
         Stop();
         readSensor = true;
         readSensorStartTime = millis();
         sendStartCommand();
       }
       tempCode = code;
-    } else {
-      Stop();
-    }
+    } 
   }
 }
 
 void parseData(String data) {
-  int index = data.indexOf('N');
-  if (index != -1) {
-    n = data.substring(index + 1, data.indexOf(',')).toInt();
+  Serial.print("Raw data received from Arduino: ");
+  Serial.println(data);
+
+  int n_index = data.indexOf("N:");
+  if (n_index != -1) {
+    n = data.substring(n_index + 2, data.indexOf(",", n_index)).toInt();
+    Serial.print("Parsed nitrogen value: ");
+    Serial.println(n);
   }
-  index = data.indexOf('P');
-  if (index != -1) {
-    p = data.substring(index + 1, data.indexOf(',', index + 1)).toInt();
+  int p_index = data.indexOf("P:");
+  if (p_index != -1) {
+    p = data.substring(p_index + 2, data.indexOf(",", p_index + 2)).toInt();
+    Serial.print("Parsed phosphorus value: ");
+    Serial.println(p);
   }
-  index = data.indexOf('K');
-  if (index != -1) {
-    k = data.substring(index + 1).toInt();
+  int k_index = data.indexOf("K:");
+  if (k_index != -1) {
+    k = data.substring(k_index + 2).toInt();
+    Serial.print("Parsed potassium value: ");
+    Serial.println(k);
+  }
+
+  if (Firebase.ready() && signupOK) {
+    sendDataPrevMillis = millis();
+    Firebase.RTDB.setInt(&fdbo, "/NPK/nitrogen", n);
+    Firebase.RTDB.setInt(&fdbo, "/NPK/phosphorus", p);
+    Firebase.RTDB.setInt(&fdbo, "/NPK/potassium", k);
+    Serial.println("Data sent to Firebase.");
   }
 }
 
